@@ -21,6 +21,8 @@ func main() {
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			// NOTE: GCP の severity: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#logseverity
 			switch {
+			case a.Key == "msg":
+				return slog.String("message", a.Value.String())
 			case a.Key == "level" && a.Value.String() == "WARN":
 				return slog.String("severity", "WARNING")
 			case a.Key == "level":
