@@ -40,7 +40,7 @@ func main() {
 				fmt.Println("エラーが起きたよ")
 			}
 
-			fmt.Printf("%s のリクエストでエラーが起きたよ", traceIDContext.Value)
+			fmt.Printf("%s のリクエストでエラーが起きたよ\n", traceIDContext.Value)
 		},
 	})
 
