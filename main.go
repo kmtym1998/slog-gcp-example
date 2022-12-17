@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -60,7 +61,7 @@ func ListenAndServe(
 	router.Use(middleware.TraceLoggerInjector(l, projectID))
 
 	// ルーティング
-	router.Get("/healthcheck", GetHealthCheck(l))
+	router.Get("/healthcheck", GetHealthCheck())
 
 	server := &http.Server{
 		Addr:              ":" + port,
@@ -74,9 +75,19 @@ func ListenAndServe(
 	return server.ListenAndServe()
 }
 
-func GetHealthCheck(l *logger.Logger) http.HandlerFunc {
+func GetHealthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		l.Info(time.Now().Format(time.RFC3339))
+		l, ok := logger.TraceLoggerFrom(r.Context())
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			io.WriteString(w, "logger not found")
+		}
+
+		err := errors.New("ErrorErrorErrorErrorError")
+		l.Debug("DebugDebugDebugDebugDebug")
+		l.Info("InfoInfoInfoInfoInfo")
+		l.Warning("WarningWarningWarningWarningWarning")
+		l.Error(err.Error(), err)
 
 		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, "OK")

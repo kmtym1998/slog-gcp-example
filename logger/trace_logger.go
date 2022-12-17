@@ -12,11 +12,8 @@ func TraceLoggerWith(ctx context.Context, logger *Logger) context.Context {
 }
 
 // context から Logger を抜き出す
-func TraceLoggerFrom(ctx context.Context) *Logger {
+func TraceLoggerFrom(ctx context.Context) (*Logger, bool) {
 	traceLogger, ok := ctx.Value(traceLoggerCtxKey{}).(*Logger)
-	if !ok {
-		panic("logger が context にないよ")
-	}
 
-	return traceLogger
+	return traceLogger, ok
 }
