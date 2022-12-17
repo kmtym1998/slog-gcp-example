@@ -9,12 +9,21 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-// traceID 付きでロギングできるロガーを context に詰める
-func TraceLoggerInjector(l *logger.Logger, projectID string) func(next http.Handler) http.Handler {
+// logger にリクエストの情報を加える
+func LoggerInjector(l *logger.Logger, projectID string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			header := []byte(r.Header.Get("X-Cloud-Trace-Context"))
-			newLogger := injectTraceID(l, header, projectID)
+			raw := []byte(r.Header.Get("X-Cloud-Trace-Context"))
+			traceID, _ := ExtractTraceID(raw)
+
+			newLogger := l.With(
+				slog.String("logging.googleapis.com/trace", fmt.Sprintf("projects/%s/traces/%s", projectID, string(traceID))),
+				slog.String("path", r.URL.Path),
+			)
+
+			newLogger.SetLoggerContexts(
+				logger.LoggerContext{Key: "traceID", Value: traceID},
+			)
 
 			r = r.WithContext(logger.TraceLoggerWith(r.Context(), newLogger))
 
@@ -23,16 +32,4 @@ func TraceLoggerInjector(l *logger.Logger, projectID string) func(next http.Hand
 
 		return http.HandlerFunc(fn)
 	}
-}
-
-// traceID 付きでロギングできるロガーを生成する
-func injectTraceID(l *logger.Logger, raw []byte, projectID string) *logger.Logger {
-	traceID, ok := ExtractTraceID(raw)
-	if !ok {
-		return l
-	}
-
-	return l.With(
-		slog.String("logging.googleapis.com/trace", fmt.Sprintf("projects/%s/traces/%s", projectID, string(traceID))),
-	)
 }

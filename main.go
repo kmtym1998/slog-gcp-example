@@ -35,7 +35,12 @@ func main() {
 		},
 
 		OnError: func(l *logger.Logger, msg string, err error, arg ...any) {
-			fmt.Println("Error が起きたよ")
+			traceIDContext, ok := l.LoggerContext("traceID")
+			if !ok {
+				fmt.Println("エラーが起きたよ")
+			}
+
+			fmt.Printf("%s のリクエストでエラーが起きたよ", traceIDContext.Value)
 		},
 	})
 
@@ -60,10 +65,11 @@ func ListenAndServe(
 	router := chi.NewRouter()
 
 	// ミドルウェア
-	router.Use(middleware.TraceLoggerInjector(l, projectID))
+	router.Use(middleware.LoggerInjector(l, projectID))
 
 	// ルーティング
-	router.Get("/healthcheck", GetHealthCheck())
+	router.Get("/", GetHealthCheckHandler())
+	router.Get("/healthcheck", GetHealthCheckHandler())
 
 	server := &http.Server{
 		Addr:              ":" + port,
@@ -77,12 +83,13 @@ func ListenAndServe(
 	return server.ListenAndServe()
 }
 
-func GetHealthCheck() http.HandlerFunc {
+func GetHealthCheckHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		l, ok := logger.TraceLoggerFrom(r.Context())
 		if !ok {
 			w.WriteHeader(http.StatusInternalServerError)
 			io.WriteString(w, "logger not found")
+			return
 		}
 
 		err := errors.New("ErrorErrorErrorErrorError")

@@ -7,14 +7,20 @@ import (
 )
 
 type Logger struct {
-	logger  *slog.Logger
-	onError func(l *Logger, msg string, err error, arg ...any)
+	logger         *slog.Logger
+	onError        func(l *Logger, msg string, err error, arg ...any)
+	loggerContexts []LoggerContext
 }
 
 type Opts struct {
 	Level       slog.Level
 	ReplaceAttr func(groups []string, a slog.Attr) slog.Attr
 	OnError     func(l *Logger, msg string, err error, arg ...any)
+}
+
+type LoggerContext struct {
+	Key   string
+	Value string
 }
 
 func New(opts Opts) *Logger {
@@ -34,6 +40,20 @@ func (l *Logger) With(args ...any) *Logger {
 		logger:  l.logger.With(args...),
 		onError: l.onError,
 	}
+}
+
+func (l *Logger) LoggerContext(k string) (*LoggerContext, bool) {
+	for _, v := range l.loggerContexts {
+		if v.Key == k {
+			return &v, true
+		}
+	}
+
+	return nil, false
+}
+
+func (l *Logger) SetLoggerContexts(args ...LoggerContext) {
+	l.loggerContexts = append(l.loggerContexts, args...)
 }
 
 func (l *Logger) Debug(msg string, arg ...any) {
