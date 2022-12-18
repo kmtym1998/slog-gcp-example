@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"os"
 
 	"golang.org/x/exp/slog"
@@ -72,7 +73,21 @@ func (l *Logger) Error(msg string, err error, arg ...any) {
 	l.logger.Error(msg, err, arg...)
 
 	go func() {
-		// エラーログ出力後なにかやりたい時 (sentry に送るとか) は OnError() を呼び元から渡す
+		// エラーログ出力後なにかやりたい時 (Sentry に送るとか) は OnError() を呼び元から渡す
 		l.onError(l, msg, err, arg...)
 	}()
+}
+
+type traceLoggerCtxKey struct{}
+
+// context に logger を詰める
+func TraceLoggerWith(ctx context.Context, logger *Logger) context.Context {
+	return context.WithValue(ctx, traceLoggerCtxKey{}, logger)
+}
+
+// context から Logger を抜き出す
+func TraceLoggerFrom(ctx context.Context) (*Logger, bool) {
+	traceLogger, ok := ctx.Value(traceLoggerCtxKey{}).(*Logger)
+
+	return traceLogger, ok
 }
