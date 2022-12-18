@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"slog-example/logger"
@@ -37,10 +37,10 @@ func main() {
 		OnError: func(l *logger.Logger, msg string, err error, arg ...any) {
 			traceIDContext, ok := l.LoggerContext("traceID")
 			if !ok {
-				fmt.Println("エラーが起きたよ")
+				log.Println(msg)
 			}
 
-			fmt.Printf("%s のリクエストでエラーが起きたよ\n", traceIDContext.Value)
+			log.Printf("%s のリクエストでエラーが起きたよ\n", traceIDContext.Value)
 		},
 	})
 
@@ -51,7 +51,7 @@ func main() {
 
 	projectID := os.Getenv("PROJECT_ID")
 
-	fmt.Println("serving...")
+	l.Debug("serving...")
 	if err := ListenAndServe(port, projectID, l); err != nil {
 		panic(err)
 	}
