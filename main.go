@@ -38,6 +38,7 @@ func main() {
 			traceIDContext, ok := l.LoggerContext("traceID")
 			if !ok {
 				log.Println(msg)
+				return
 			}
 
 			log.Printf("%s のリクエストでエラーが起きたよ\n", traceIDContext.Value)

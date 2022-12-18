@@ -2,8 +2,10 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 )
 
@@ -70,6 +72,7 @@ func (l *Logger) Warning(msg string, arg ...any) {
 }
 
 func (l *Logger) Error(msg string, err error, arg ...any) {
+	arg = append(arg, slog.String("stack", fmt.Sprintf("%+v", errors.Wrap(err, "aaa"))))
 	l.logger.Error(msg, err, arg...)
 
 	go func() {
