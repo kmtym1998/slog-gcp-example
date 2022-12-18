@@ -34,13 +34,13 @@ func New(opts Opts) *Logger {
 				ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
 					// NOTE: GCP の severity: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#logseverity
 					switch {
-					case a.Key == "msg":
+					case a.Key == slog.MessageKey:
 						return slog.String("message", a.Value.String())
-					case a.Key == "level" && a.Value.String() == "WARN":
+					case a.Key == slog.LevelKey && a.Value.String() == slog.LevelWarn.String():
 						return slog.String("severity", "WARNING")
-					case a.Key == "level":
+					case a.Key == slog.LevelKey:
 						return slog.String("severity", a.Value.String())
-					case a.Key == "err":
+					case a.Key == slog.ErrorKey:
 						return slog.String("errorMessage", a.Value.String())
 					}
 
