@@ -72,7 +72,8 @@ func (l *Logger) Warning(msg string, arg ...any) {
 }
 
 func (l *Logger) Error(msg string, err error, arg ...any) {
-	arg = append(arg, slog.String("stack", fmt.Sprintf("%+v", errors.Wrap(err, "aaa"))))
+	// stacktrace を表示
+	arg = append(arg, slog.String("stack", fmt.Sprintf("%+v", errors.WithStack(err))))
 	l.logger.Error(msg, err, arg...)
 
 	go func() {
