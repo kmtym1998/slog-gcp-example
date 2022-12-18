@@ -16,9 +16,8 @@ type Logger struct {
 }
 
 type Opts struct {
-	Level       slog.Level
-	ReplaceAttr func(groups []string, a slog.Attr) slog.Attr
-	OnError     func(l *Logger, msg string, err error, arg ...any)
+	Level   slog.Level
+	OnError func(l *Logger, msg string, err error, arg ...any)
 }
 
 type LoggerContext struct {
@@ -30,8 +29,23 @@ func New(opts Opts) *Logger {
 	return &Logger{
 		logger: slog.New(
 			slog.HandlerOptions{
-				Level:       opts.Level,
-				ReplaceAttr: opts.ReplaceAttr,
+				Level: opts.Level,
+
+				ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+					// NOTE: GCP の severity: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#logseverity
+					switch {
+					case a.Key == "msg":
+						return slog.String("message", a.Value.String())
+					case a.Key == "level" && a.Value.String() == "WARN":
+						return slog.String("severity", "WARNING")
+					case a.Key == "level":
+						return slog.String("severity", a.Value.String())
+					case a.Key == "err":
+						return slog.String("errorMessage", a.Value.String())
+					}
+
+					return a
+				},
 			}.NewJSONHandler(os.Stdout),
 		),
 		onError: opts.OnError,
