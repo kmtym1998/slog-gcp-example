@@ -40,8 +40,6 @@ func New(opts Opts) *Logger {
 						return slog.String("severity", "WARNING")
 					case a.Key == slog.LevelKey:
 						return slog.String("severity", a.Value.String())
-					case a.Key == slog.ErrorKey:
-						return slog.String("errorMessage", a.Value.String())
 					}
 
 					return a
