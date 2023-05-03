@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/gofrs/uuid/v5"
 	"golang.org/x/exp/slog"
 )
 
@@ -55,6 +57,7 @@ func ListenAndServe(
 	// ルーティング
 	router.Get("/", GetHealthCheckHandler())
 	router.Get("/healthcheck", GetHealthCheckHandler())
+	router.Post("/user", PostUserHandler())
 
 	server := &http.Server{
 		Addr:              ":" + port,
@@ -85,5 +88,38 @@ func GetHealthCheckHandler() http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, "OK")
+	}
+}
+
+type User struct {
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	Password Secret    `json:"password"`
+}
+
+type Secret string
+
+func (s Secret) String() string {
+	return "********"
+}
+
+func PostUserHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		l, ok := logger.TraceLoggerFrom(r.Context())
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			io.WriteString(w, "logger not found")
+			return
+		}
+
+		user := User{
+			ID:       uuid.Must(uuid.NewV4()),
+			Name:     "kmtym1998",
+			Password: "password",
+		}
+
+		fmt.Println(user)
+		fmt.Println(user.Password)
+		l.Debug(fmt.Errorf("failed to create user: %+v", user).Error())
 	}
 }
